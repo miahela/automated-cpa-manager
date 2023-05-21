@@ -1,6 +1,5 @@
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support import expected_conditions as EC
 from functions.utils import read_json_file
+import time
 
 
 class WebLoginManager:
@@ -13,6 +12,7 @@ class WebLoginManager:
     }
 
     def __init__(self, selenium_manager):
+        self.selenium_manager = selenium_manager
         self.driver = selenium_manager.driver
         self.wait = selenium_manager.wait
 
@@ -35,33 +35,24 @@ class WebLoginManager:
         self.driver.refresh()
 
         try:
-            self.click_element_if_exists(self.xpath_config["ACCEPT_COOKIES_XPATH"])
-
-            self.click_element(self.xpath_config["LOGIN_BUTTON_XPATH"])
-            self.fill_field(
+            self.selenium_manager.click_element_if_exists(
+                self.xpath_config["ACCEPT_COOKIES_XPATH"]
+            )
+            time.sleep(5)
+            self.selenium_manager.click_element(self.xpath_config["LOGIN_BUTTON_XPATH"])
+            time.sleep(5)
+            self.selenium_manager.fill_field(
                 self.xpath_config["EMAIL_FIELD_XPATH"], website_credentials["email"]
             )
-            self.click_element(self.xpath_config["NEXT_BUTTON_XPATH"])
-            self.fill_field(
+            time.sleep(5)
+            self.selenium_manager.click_element(self.xpath_config["NEXT_BUTTON_XPATH"])
+            time.sleep(5)
+            self.selenium_manager.fill_field(
                 self.xpath_config["PASSWORD_FIELD_XPATH"],
                 website_credentials["password"],
             )
-            self.click_element(self.xpath_config["NEXT_BUTTON_XPATH"])
-            print("Logged in successfully!")
+            time.sleep(5)
+            self.selenium_manager.click_element(self.xpath_config["NEXT_BUTTON_XPATH"])
+            time.sleep(5)
         except Exception as e:
             print(f"An error occurred: {e}")
-
-    def click_element(self, xpath):
-        element = self.wait.until(EC.element_to_be_clickable((By.XPATH, xpath)))
-        element.click()
-
-    def fill_field(self, xpath, data):
-        field = self.wait.until(EC.presence_of_element_located((By.XPATH, xpath)))
-        field.send_keys(data)
-
-    def click_element_if_exists(self, xpath):
-        try:
-            element = self.wait.until(EC.presence_of_element_located((By.XPATH, xpath)))
-            element.click()
-        except Exception as e:
-            print(f"Element not found. Ignored: {e}")

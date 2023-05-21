@@ -30,7 +30,6 @@ def main():
 
     # Login to the website
     web_login_manager.login(url, website_credentials_file, cookies_file)
-    print("Logged in successfully")
     time.sleep(8)
 
     # Add unhosted domains
