@@ -2,18 +2,10 @@ from classes.google_sheets_manager import GoogleSheetsManager
 from classes.web_hosting_manager import WebHostingManager
 from classes.selenium_manager import SeleniumManager
 from functions.setup_logger import setup_logger
+from functions.read_json_file import read_json_file
 
 logger = setup_logger()
-
-# File paths and settings
-CONFIG = {
-    "sheet_credentials": "data/mp-cpa-managment-49ac92de94ea.json",
-    "cookies": "data/my.siteground.com_cookies.json",
-    "website_credentials": "data/website_credentials.json",
-    "sheet_name": "Copy of MP CPA Management",
-    "worksheet_index": 1,
-    "url": "https://eu.siteground.com/",
-}
+CONFIG = read_json_file("config.json")
 
 
 class App:

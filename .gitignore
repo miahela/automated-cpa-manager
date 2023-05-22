@@ -1,6 +1,9 @@
-data/
-.vscode/
+# Directories
+/data/
+/.vscode/
+__pycache__/
 
+# Files
 temp.py
-
 error_log.txt
+config.json
