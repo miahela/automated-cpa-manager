@@ -2,12 +2,11 @@ from bs4 import BeautifulSoup
 
 
 class HTMLModifier:
-    def __init__(self, filepath):
-        self.filepath = filepath
+    def __init__(self):
         self.soup = None
 
-    def load_html(self):
-        with open(self.filepath, "r") as f:
+    def load_html(self, filepath):
+        with open(filepath, "r") as f:
             content = f.read()
             self.soup = BeautifulSoup(content, "html.parser")
 

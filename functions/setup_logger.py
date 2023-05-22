@@ -1,4 +1,3 @@
-import json
 import logging
 
 
@@ -9,8 +8,4 @@ def setup_logger():
         handlers=[logging.FileHandler("debug.log"), logging.StreamHandler()],
     )
 
-
-def read_json_file(file_name):
-    with open(file_name) as f:
-        data = json.load(f)
-    return data
+    return logging.getLogger("app")
