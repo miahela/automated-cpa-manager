@@ -1,2 +1,6 @@
-credentials/
-LandingPages/
+data/
+.vscode/
+
+temp.py
+
+error_log.txt
