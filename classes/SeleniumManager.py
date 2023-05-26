@@ -1,15 +1,13 @@
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
 from selenium import webdriver
-import time
 
 
 class SeleniumManager:
-    def __init__(self, logger, wait_time=10, headless=False):
+    def __init__(self, logger, wait_time=20, headless=False):
         self.logger = logger
         options = Options()
         options.headless = headless
@@ -19,29 +17,31 @@ class SeleniumManager:
 
     def quit(self):
         self.driver.quit()
+        self.logger.info("Selenium driver closed successfully!")
 
     def get_driver(self):
         return self.driver
 
     def click_element(self, xpath):
-        self.perform_action_on_element(xpath, "click")
-
-    def double_click_element(self, xpath):
-        self.perform_action_on_element(xpath, "double_click")
-
-    def context_click_element(self, xpath):
-        self.perform_action_on_element(xpath, "context_click")
-
-    def perform_action_on_element(self, xpath, action_name):
         try:
-            element = self.wait.until(EC.presence_of_element_located((By.XPATH, xpath)))
-            action = ActionChains(self.driver)
-            getattr(action, action_name)(element).perform()
+            self.wait.until(EC.element_to_be_clickable((By.XPATH, xpath))).click()
         except Exception as e:
-            self.logger.error(f"Error performing {action_name} on element: {e}")
+            self.logger.error(f"Error clicking element {xpath}: {e}")
 
     def accept_cookies(self, xpath='//*[@id="onetrust-accept-btn-handler"]'):
-        self.click_element(xpath)
+        try:
+            cookies = self.driver.find_elements(By.XPATH, xpath)
+            if len(cookies) > 0:
+                cookies[0].click()
+        except Exception as e:
+            pass
+
+    def add_local_storage(self, key, value):
+        try:
+            script = f"localStorage.setItem('{key}', '{value}');"
+            self.driver.execute_script(script)
+        except Exception as e:
+            self.logger.error(f"Error adding local storage: {e}")
 
     def fill_field(self, xpath, data):
         try:
@@ -73,3 +73,38 @@ class SeleniumManager:
             except Exception as e:
                 self.logger.error(f"Error adding cookie: {e}")
         self.logger.info("Cookies added successfully!")
+
+    def element_exists(self, xpath):
+        try:
+            self.wait.until(EC.presence_of_element_located((By.XPATH, xpath)))
+            return True
+        except Exception as e:
+            self.logger.error(f"Error checking if element exists: {e}")
+            return False
+
+    def wait_until_url_changes(self, url):
+        try:
+            self.wait.until(EC.url_changes(url))
+        except Exception as e:
+            self.logger.error(f"Error waiting until url changes: {e}")
+
+    def close_all_tabs_except_first(self):
+        try:
+            self.driver.switch_to.window(self.driver.window_handles[0])
+            for handle in self.driver.window_handles[1:]:
+                self.driver.switch_to.window(handle)
+                self.driver.close()
+        except Exception as e:
+            self.logger.error(f"Error closing all tabs except first: {e}")
+
+    def open_link(self, href):
+        try:
+            self.driver.get(href)
+        except Exception as e:
+            self.logger.error(f"Error opening link: {e}")
+
+    def get_elements(self, xpath):
+        try:
+            return self.driver.find_elements(By.XPATH, xpath)
+        except Exception as e:
+            self.logger.error(f"Error getting elements: {e}")

@@ -1,8 +1,9 @@
 {
-    "sheet_credentials": "/path/to/your/google/sheets/credentials.json",
-    "cookies": "/path/to/your/website/cookies.json",
-    "website_credentials": "/path/to/your/website/credentials.json",
-    "sheet_name": "My Google Sheets Document",
-    "worksheet_index": 0,
-    "url": "https://www.your-website.com"
+    "sheet_credentials": "Path to the JSON file that stores the credentials for accessing the Google Sheets API.",
+    "cookies": "Path to the JSON file that stores the cookies required for authentication or session management.",
+    "local_storage": "Path to the JSON file that stores the local storage data of a website.",
+    "website_credentials": "Path to the JSON file that stores the credentials or login information for a website.",
+    "sheet_name": "Name of the specific sheet within the Google Sheets document to be accessed.",
+    "worksheet_index": "Index or indices of the worksheet(s) within the specified sheet, separated by spaces.",
+    "url": "URL of the website to be accessed or interacted with."
 }

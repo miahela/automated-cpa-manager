@@ -4,6 +4,6 @@
 __pycache__/
 
 # Files
-temp.py
-error_log.txt
+error.log
+info.log
 config.json
