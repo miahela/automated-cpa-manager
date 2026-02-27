@@ -22,7 +22,7 @@ class HTTPS_CacheCleaner:
         )
 
     def start(self):
-        logger.info("*** Starting To Add Domains on Hosting ***")
+        logger.info("*** Starting HTTPS Enforcement and Cache Flush ***")
         self.web_hosting_manager.initialize_session(
             CONFIG["url"], CONFIG["cookies"], CONFIG["local_storage"]
         )

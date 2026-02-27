@@ -172,7 +172,7 @@ class WebHostingManager:
             self.selenium_manager.click_element(self.xpath_config["switch_xpath"])
             return True
         except Exception as e:
-            self.logging.error(f"Error enabling https for {domain}: {e}")
+            self.logger.error(f"Error enabling https for {domain}: {e}")
             return False
 
     def flush_cache(self, domain):
@@ -187,5 +187,5 @@ class WebHostingManager:
             self.selenium_manager.click_element(self.xpath_config["flush_action_xpath"])
             return True
         except Exception as e:
-            self.logging.error(f"Error flushing cache for {domain}: {e}")
+            self.logger.error(f"Error flushing cache for {domain}: {e}")
             return False
