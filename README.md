@@ -1,6 +1,6 @@
 # Automated CPA Manager
 
-A Selenium-based automation suite for managing CPA (Cost Per Action) marketing campaigns. It automates repetitive SiteGround hosting tasks — adding domains, uploading landing pages, enforcing HTTPS, and flushing cache — all driven by a Google Sheets tracker.
+A Selenium-based automation suite for managing CPA (Cost Per Action) marketing campaigns. It automates repetitive SiteGround hosting tasks: adding domains, uploading landing pages, enforcing HTTPS, and flushing cache. All driven by a Google Sheets tracker.
 
 ## Overview
 
@@ -28,7 +28,7 @@ automated-cpa-manager/
 ├── functions/
 │   ├── read_json_file.py       # JSON config loader
 │   └── setup_logger.py         # Dual-handler logger (info.log + error.log)
-├── data/                       # Gitignored — credentials and runtime data go here
+├── data/                       # Gitignored; credentials and runtime data go here
 ├── DomainMaestro.py
 ├── ContentUpdater.py
 ├── HTTPS_CacheCleaner.py
@@ -79,7 +79,7 @@ Place the following files inside the `data/` directory (gitignored):
 
 ### 4. Google Sheet structure
 
-Each worksheet needs at minimum a `Domain` column. The scripts look for these status columns and update them after each action:
+Each worksheet needs at a minimum a `Domain` column. The scripts look for these status columns and update them after each action:
 
 | Column | Used by |
 |---|---|
