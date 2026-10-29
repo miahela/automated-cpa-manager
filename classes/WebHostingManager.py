@@ -9,17 +9,19 @@ import os
 
 
 class WebHostingManager:
-    def __init__(self, selenium_manager, logger, xpath_config_file="data/xpaths.json"):
+    def __init__(self, selenium_manager, logger, xpath_config_file, landing_pages, websites_url):
         self.selenium_manager = selenium_manager
         self.driver = selenium_manager.get_driver()
         self.wait = selenium_manager.wait
         self.xpath_config = read_json_file(xpath_config_file)
         self.disk_file_manager = DiskFileManager()
         self.logger = logger
+        self.landing_pages = landing_pages
+        self.websites_url = websites_url
 
-    def initialize_session(self, url, cookies_file, local_storage={}):
-        cookies = read_json_file(cookies_file)
-        local_storage = read_json_file(local_storage)
+    def initialize_session(self, url, cookies_file=None, local_storage=None):
+        cookies = read_json_file(cookies_file) if cookies_file else []
+        local_storage = read_json_file(local_storage) if local_storage else {}
         self.driver.get(url)
         self.selenium_manager.add_cookies(cookies)
         for key, value in local_storage.items():
@@ -118,7 +120,7 @@ class WebHostingManager:
         self.delete_file("public_html.zip")
 
     def navigate_to_file_manager(self, domain):
-        self.selenium_manager.open_link("https://my.siteground.com/websites/list")
+        self.selenium_manager.open_link(self.websites_url)
         self.selenium_manager.click_element(
             f'//*[contains(text(), "{domain}")]/ancestor::div[contains(@class, "sg-container")]//*[contains(text(), "Site Tools")]'
         )
@@ -136,8 +138,8 @@ class WebHostingManager:
             '//*[@id="root"]/div/div/div[2]/main/div/div[2]/div/div/div[1]/div[2]/div/span[3]/span[1]'
         )
 
-        root_folder_path = os.path.join(os.getcwd(), "data", "landing_pages", type)
-        zip_path = os.path.join(os.getcwd(), "data", "landing_pages", "public_html.zip")
+        root_folder_path = os.path.join(self.landing_pages, type)
+        zip_path = os.path.join(self.landing_pages, "public_html.zip")
 
         self.disk_file_manager.change_html_content(
             root_folder_path, domain_info["Full Name"]
@@ -154,10 +156,11 @@ class WebHostingManager:
         time.sleep(10)
 
         self.unzip_inside_website(domain_info["Domain"])
+        return True
 
     def https_enforce(self, domain):
         try:
-            self.selenium_manager.open_link("https://my.siteground.com/websites/list")
+            self.selenium_manager.open_link(self.websites_url)
             self.selenium_manager.click_element(
                 f'//*[contains(text(), "{domain}")]/ancestor::div[contains(@class, "sg-container")]//*[contains(text(), "Site Tools")]'
             )
@@ -177,6 +180,10 @@ class WebHostingManager:
 
     def flush_cache(self, domain):
         try:
+            self.selenium_manager.open_link(self.websites_url)
+            self.selenium_manager.click_element(
+                f'//*[contains(text(), "{domain}")]/ancestor::div[contains(@class, "sg-container")]//*[contains(text(), "Site Tools")]'
+            )
             self.selenium_manager.click_element(
                 self.xpath_config["speed_side_menu_xpath"]
             )

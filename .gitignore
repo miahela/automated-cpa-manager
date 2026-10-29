@@ -7,3 +7,12 @@ __pycache__/
 error.log
 info.log
 config.json
+*service-account*.json
+*service_account*.json
+
+.env
+.env.*
+!.env.example
+.venv/
+config/xpaths.json
+*.zip

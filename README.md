@@ -1,113 +1,58 @@
 # Automated CPA Manager
 
-A Selenium-based automation suite for managing CPA (Cost Per Action) marketing campaigns. It automates repetitive SiteGround hosting tasks: adding domains, uploading landing pages, enforcing HTTPS, and flushing cache. All driven by a Google Sheets tracker.
+Python browser automation for managing landing pages on SiteGround from a Google Sheets tracker. It reduces repeated hosting setup and content updates, then records completed actions in the sheet.
 
-## Overview
-
-Managing many CPA landing pages manually is tedious. This tool reads a Google Sheet that tracks domain status and automates the hosting workflow end-to-end using browser automation.
-
-**Three standalone scripts, each handling a phase of the workflow:**
-
-| Script | What it does |
+| Script | Purpose |
 |---|---|
-| `DomainMaestro.py` | Registers unhosted domains on SiteGround, then uploads the correct landing page folder |
-| `ContentUpdater.py` | Replaces content on already-hosted domains (deletes old files, uploads new ones) |
-| `HTTPS_CacheCleaner.py` | Enforces HTTPS and flushes the dynamic cache for each domain |
+| `DomainMaestro.py` | Add existing domains to hosting and upload landing pages. It does not purchase or register domains. |
+| `ContentUpdater.py` | Delete existing website content and upload its replacement. |
+| `HTTPS_CacheCleaner.py` | Enforce HTTPS and retry pending cache flushes independently. |
 
-The Google Sheet acts as the source of truth — each script reads domains filtered by a status column (e.g. `"Domain Added on Hosting" = FALSE`) and writes back `TRUE` after each successful operation.
+![Screenshot placeholder, replace with a redacted demo](docs/screenshot.png)
 
-## Architecture
+## Setup and run
 
-```
-automated-cpa-manager/
-├── classes/
-│   ├── SeleniumManager.py      # Chrome WebDriver wrapper (click, fill, wait, cookies)
-│   ├── WebHostingManager.py    # SiteGround-specific automation (login, add domain, file manager)
-│   ├── GoogleSheetsManager.py  # Read/write domain data from Google Sheets
-│   └── DiskFileManager.py      # HTML content injection + zip packaging
-├── functions/
-│   ├── read_json_file.py       # JSON config loader
-│   └── setup_logger.py         # Dual-handler logger (info.log + error.log)
-├── data/                       # Gitignored; credentials and runtime data go here
-├── DomainMaestro.py
-├── ContentUpdater.py
-├── HTTPS_CacheCleaner.py
-├── config-example.json         # Template for config.json
-└── requirements.txt
+Use Python 3.10+ and Chrome. Dependencies retain the original version pins; compatibility with newer Python and Chrome versions needs a live check. ChromeDriver must match Chrome and be available locally, or Selenium Manager needs network access to obtain it.
+
+```powershell
+cd C:\Users\miahlea\Desktop\Projects\automated-cpa-manager
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+Copy-Item config-example.json config.json
+New-Item -ItemType Directory -Force data | Out-Null
+Copy-Item samples\landing_pages data\landing_pages -Recurse
+Copy-Item samples\website_credentials.example.json data\website_credentials.json
+Copy-Item config\xpaths.example.json config\xpaths.json
 ```
 
-## Setup
+Edit `config.json` with your sheet name, worksheet indexes (space-separated, starting at 0), URLs, and local file paths. Paths resolve relative to that config file. `.env.example` documents the optional `CPA_CONFIG` process environment variable; `.env` files are not loaded automatically.
 
-### 1. Install dependencies
+Put a Google service account key at `data/service-account.json`, enable the Sheets and Drive APIs, and share your test spreadsheet with that account as Editor. Edit the local website credential file. Cookies and local storage are optional: leave their config values null or provide paths to exported JSON (a cookie list and a key/value object respectively).
 
-```bash
-pip install -r requirements.txt
+The original `data/xpaths.json` was not included. `config/xpaths.example.json` lists every required selector key, with explicit placeholders. Copy it and replace every placeholder with a selector verified against your dashboard before running any workflow. No live selectors have been verified in this cleanup.
+
+Import `samples/domains.csv` into a test sheet. All sample names and domains are fictional. Replace `landing.example` with a domain you control for a workflow test. Preserve all CSV headers and use literal TRUE/FALSE status cells. Each domain must appear once across configured worksheets, with no blank rows. `Type` selects `data/landing_pages/<Type>/index.html`; `Full Name` replaces the title and main heading. Use simple HTML templates with existing head, body, title and `h1.heading` tags.
+
+```powershell
+.\.venv\Scripts\python.exe -m unittest discover -s tests -v
+.\.venv\Scripts\python.exe smoke_test.py
+# After verifying selectors, credentials, and a disposable test domain:
+.\.venv\Scripts\python.exe DomainMaestro.py
+.\.venv\Scripts\python.exe ContentUpdater.py
+.\.venv\Scripts\python.exe HTTPS_CacheCleaner.py
 ```
 
-Requires Python 3.8+ and [ChromeDriver](https://chromedriver.chromium.org/) matching your installed Chrome version.
+The three workflows make live changes. Both upload workflows delete existing hosting files. Back up the test site first. Run one script at a time. `smoke_test.py` only reads sheet statuses and opens the dashboard, without logging in or changing hosting content. Logs go to `info.log` and `error.log` in the working directory.
 
-### 2. Configure
+## Stack
 
-Copy `config-example.json` to `config.json` and fill in your values:
+Python, Selenium/Chrome, gspread, Google service account authentication, BeautifulSoup, and ZIP packaging. Dependencies are listed in `requirements.txt`.
 
-```bash
-cp config-example.json config.json
-```
+## Known limits
 
-```json
-{
-    "sheet_credentials":   "data/your-service-account.json",
-    "cookies":             "data/your-site-cookies.json",
-    "local_storage":       "data/local_storage.json",
-    "website_credentials": "data/website_credentials.json",
-    "sheet_name":          "Your Sheet Name",
-    "worksheet_index":     "0 1",
-    "url":                 "https://eu.siteground.com/"
-}
-```
-
-### 3. Credentials
-
-Place the following files inside the `data/` directory (gitignored):
-
-- **Google service account JSON** — from [Google Cloud Console](https://console.cloud.google.com/). The service account needs Editor access to your Google Sheet.
-- **`website_credentials.json`** — SiteGround login:
-  ```json
-  { "email": "you@example.com", "password": "your-password" }
-  ```
-- **`cookies.json`** / **`local_storage.json`** — optional session data to skip the login flow (export from your browser's DevTools).
-
-### 4. Google Sheet structure
-
-Each worksheet needs at a minimum a `Domain` column. The scripts look for these status columns and update them after each action:
-
-| Column | Used by |
-|---|---|
-| `Domain Added on Hosting` | DomainMaestro |
-| `Upload Folder` | DomainMaestro, ContentUpdater |
-| `Name Changed` | DomainMaestro, ContentUpdater |
-| `Enforce HTTPS` | HTTPS_CacheCleaner |
-| `Flush Cache` | HTTPS_CacheCleaner |
-
-### 5. Landing pages
-
-Place landing page template folders under `data/landing_pages/<Type>/` where `Type` matches the value in your sheet's `Type` column. Each folder should contain an `index.html`. The tool injects the domain's `Full Name` into the `<title>` and `<h1 class="heading">` before uploading.
-
-## Usage
-
-Run whichever script matches your current workflow phase:
-
-```bash
-python DomainMaestro.py       # Add new domains + upload landing pages
-python ContentUpdater.py      # Replace content on existing domains
-python HTTPS_CacheCleaner.py  # Enforce HTTPS + flush cache
-```
-
-Logs are written to `info.log` and `error.log` in the project root.
-
-## Tech Stack
-
-- **Selenium 4** — browser automation
-- **gspread** — Google Sheets API
-- **BeautifulSoup4** — HTML content injection
-- **Google Auth** — service account authentication
+- SiteGround selectors need re-verifying against the current UI before live use, including selectors embedded in the Python scripts. The original selector config is missing and must be supplied locally. MFA, CAPTCHA, and session expiry may interrupt runs.
+- Offline regressions use mocked browser and API objects. They check local behavior, not live authentication, selectors, or upload completion. No network test was run during cleanup.
+- Some hosting actions use fixed waits and report success when the browser sequence completes, without verifying the final remote state. Check the test site and sheet after a workflow run.
+- Templates are edited in place, and uploads share one ZIP path. Keep a clean template backup and avoid concurrent runs.
+- This is SiteGround-specific automation, not a general hosting client. No retry scheduler or rollback is included.
+- Credentials, session exports, landing pages, local selector config, and generated archives are ignored by Git. Keep real client data out of tracked samples.

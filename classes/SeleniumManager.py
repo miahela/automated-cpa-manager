@@ -27,6 +27,7 @@ class SeleniumManager:
             self.wait.until(EC.element_to_be_clickable((By.XPATH, xpath))).click()
         except Exception as e:
             self.logger.error(f"Error clicking element {xpath}: {e}")
+            raise
 
     def accept_cookies(self, xpath='//*[@id="onetrust-accept-btn-handler"]'):
         try:
@@ -38,8 +39,7 @@ class SeleniumManager:
 
     def add_local_storage(self, key, value):
         try:
-            script = f"localStorage.setItem('{key}', '{value}');"
-            self.driver.execute_script(script)
+            self.driver.execute_script("localStorage.setItem(arguments[0], arguments[1]);", key, value)
         except Exception as e:
             self.logger.error(f"Error adding local storage: {e}")
 
@@ -50,11 +50,12 @@ class SeleniumManager:
             field.send_keys(Keys.ENTER)
         except Exception as e:
             self.logger.error(f"Error filling field: {e}")
+            raise
 
     def open_link_new_tab(self, href):
         try:
             initial_tabs = len(self.driver.window_handles)
-            self.driver.execute_script("window.open('%s', '_blank')" % href)
+            self.driver.execute_script("window.open(arguments[0], '_blank');", href)
             WebDriverWait(self.driver, 10).until(
                 lambda driver: len(driver.window_handles) > initial_tabs
             )
@@ -62,13 +63,12 @@ class SeleniumManager:
         except Exception as e:
             self.logger.error(f"Error opening link in new tab: {e}")
 
-    def add_cookies(self, cookies, domain="eu.siteground.com"):
+    def add_cookies(self, cookies):
         for cookie in cookies:
             try:
                 cookie = {
                     k: v for k, v in cookie.items() if k not in ["expiry", "sameSite"]
                 }
-                cookie["domain"] = domain
                 self.driver.add_cookie(cookie)
             except Exception as e:
                 self.logger.error(f"Error adding cookie: {e}")
@@ -87,6 +87,7 @@ class SeleniumManager:
             self.wait.until(EC.url_changes(url))
         except Exception as e:
             self.logger.error(f"Error waiting until url changes: {e}")
+            raise
 
     def close_all_tabs_except_first(self):
         try:
@@ -94,6 +95,7 @@ class SeleniumManager:
             for handle in self.driver.window_handles[1:]:
                 self.driver.switch_to.window(handle)
                 self.driver.close()
+            self.driver.switch_to.window(self.driver.window_handles[0])
         except Exception as e:
             self.logger.error(f"Error closing all tabs except first: {e}")
 
@@ -102,6 +104,7 @@ class SeleniumManager:
             self.driver.get(href)
         except Exception as e:
             self.logger.error(f"Error opening link: {e}")
+            raise
 
     def get_elements(self, xpath):
         try:

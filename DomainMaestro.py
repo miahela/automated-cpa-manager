@@ -1,30 +1,34 @@
 from classes.GoogleSheetsManager import GoogleSheetsManager
 from classes.WebHostingManager import WebHostingManager
 from classes.SeleniumManager import SeleniumManager
-from functions.read_json_file import read_json_file
+from functions.load_config import load_config
 from functions.setup_logger import setup_logger
 import time
 
 logger = setup_logger()
-CONFIG = read_json_file("config.json")
+
 true = "TRUE"
 false = "FALSE"
 
 
 class DomainMaestro:
     def __init__(self):
+        self.config = load_config()
         self.selenium_manager = SeleniumManager(logger)
-        self.web_hosting_manager = WebHostingManager(self.selenium_manager, logger)
+        self.web_hosting_manager = WebHostingManager(
+            self.selenium_manager, logger, self.config["xpath_config"],
+            self.config["landing_pages"], self.config["websites_url"]
+        )
         self.google_sheets_manager = GoogleSheetsManager(
-            CONFIG["sheet_credentials"], CONFIG["sheet_name"], CONFIG["worksheet_index"]
+            self.config["sheet_credentials"], self.config["sheet_name"], self.config["worksheet_index"]
         )
 
     def start(self):
         logger.info("*** Starting To Add Domains on Hosting ***")
         self.web_hosting_manager.initialize_session(
-            CONFIG["url"], CONFIG["cookies"], CONFIG["local_storage"]
+            self.config["url"], self.config["cookies"], self.config["local_storage"]
         )
-        self.web_hosting_manager.login(CONFIG["website_credentials"])
+        self.web_hosting_manager.login(self.config["website_credentials"])
         self.selenium_manager.click_element("//a[@href='/websites/list']")
 
     def add_domains(self):
@@ -47,7 +51,7 @@ class DomainMaestro:
                 domain, "Domain Added on Hosting", true
             )
             self.selenium_manager.open_link_new_tab(
-                "https://my.siteground.com/websites/list"
+                self.config["websites_url"]
             )
 
         time.sleep(
@@ -84,7 +88,9 @@ class DomainMaestro:
 
 if __name__ == "__main__":
     domain_maestro = DomainMaestro()
-    domain_maestro.start()
-    domain_maestro.add_domains()
-    domain_maestro.upload_folders()
-    domain_maestro.selenium_manager.quit()
+    try:
+        domain_maestro.start()
+        domain_maestro.add_domains()
+        domain_maestro.upload_folders()
+    finally:
+        domain_maestro.selenium_manager.quit()
