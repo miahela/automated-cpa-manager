@@ -8,8 +8,6 @@ Python browser automation for managing landing pages on SiteGround from a Google
 | `ContentUpdater.py` | Delete existing website content and upload its replacement. |
 | `HTTPS_CacheCleaner.py` | Enforce HTTPS and retry pending cache flushes independently. |
 
-![Screenshot placeholder, replace with a redacted demo](docs/screenshot.png)
-
 ## Setup and run
 
 Use Python 3.10+ and Chrome. Dependencies retain the original version pins; compatibility with newer Python and Chrome versions needs a live check. ChromeDriver must match Chrome and be available locally, or Selenium Manager needs network access to obtain it.
